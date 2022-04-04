@@ -44,23 +44,24 @@ int intervall = 15;
         TextView tvinterval = findViewById(R.id.tvinterval);
 
         tvurl.setText(tvurl.getText().toString()+url);
-        tvinterval.setText(tvinterval.getText().toString()+interval);
+        tvinterval.setText(tvinterval.getText().toString()+interval/60000);
 
         Spinner spinner = findViewById(R.id.spinner4);
         ArrayList<String> times = new ArrayList<>();
-        times.add("15");
-        times.add("30");
-        times.add("45");
-        times.add("60");
+        times.add("15 минут");
+        times.add("30 минут");
+        times.add("45 минут");
+        times.add("60 минут");
         ArrayAdapter<?> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, times);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                intervall = 15*(i+1);
+                intervall = 60000*15*(i+1);
                 SharedPreferences.Editor e = sp.edit();
                 e.putInt("interval", intervall);
+                e.apply();
             }
 
             @Override
@@ -69,6 +70,11 @@ int intervall = 15;
             }
         });
         checkService();
+    }
+    @Override
+    public void onResume(){
+        checkService();
+        super.onResume();
     }
 
     void checkService(){
@@ -99,8 +105,10 @@ int intervall = 15;
         Intent intent = new Intent(MainActivity.this, ParceService.class);
         intent.putExtra("url", url);
         startService(intent);
+        checkService();
     }
     public void onStopServiceClick(View view){
         stopService(new Intent(MainActivity.this, ParceService.class));
+        checkService();
     }
 }

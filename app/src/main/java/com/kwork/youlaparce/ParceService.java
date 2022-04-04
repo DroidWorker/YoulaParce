@@ -42,6 +42,7 @@ public class ParceService extends Service {
     String resUrl;
     SharedPreferences sp;
     WebView wv;
+    int interval;
 
     public ParceService(){
 
@@ -65,8 +66,27 @@ public class ParceService extends Service {
         else{
             url = sp.getString("url", "");
         }
+        interval = sp.getInt("interval", 900000);//default 15 min = 900000 msec
         loadData();
         return super.onStartCommand(intent, flags, startId);
+    }
+    class CDT extends CountDownTimer {
+
+        public CDT(long startTime, long interval) {
+            super(startTime, interval);
+            Log.i("gfggfgfgfgf", "timerStarted");
+        }
+
+        @Override
+        public void onFinish() {
+            Log.i("gfggf", "loaddata");
+            loadData();
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+
+        }
     }
 
     void sendNotif() {
@@ -128,6 +148,8 @@ public class ParceService extends Service {
                                     resUrl = s;
                                     sendNotif();
                                 }
+                                CDT cdt = new CDT(interval, 1000);
+                                cdt.start();
                             }
                         }
                     });
@@ -150,87 +172,11 @@ public class ParceService extends Service {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                //CDT cdt = new CDT(30000, 1000);
-                //cdt.start();
-                Log.i("gfggf", "pf");
+                Log.i("gfggf", "pf"+interval);
             }
-            class CDT extends CountDownTimer {
-
-                public CDT(long startTime, long interval) {
-                    super(startTime, interval);
-                }
-
-                @Override
-                public void onFinish() {
-                    Log.i("gfggf", url);
-                    wv.evaluateJavascript("javascript: (function(){return document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw eDTCjk')[0].innerHTML})()", new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String s) {
-                            Log.i("gfggfggfggf", s);
-                        }
-                    });
-                }
-
-                @Override
-                public void onTick(long millisUntilFinished) {
-
-                }
-            }
-
-            /*@Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-
-
-                /*if (request.getUrl().toString().contains("/endProcess")) {
-
-                    windowManager.removeView(wv);
-
-                    wv.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            wv.destroy();
-                        }
-                    });
-                    stopSelf();
-                    return new WebResourceResponse("bgsType", "someEncoding", null);
-                }
-                else {
-                    return null;
-                //}
-            }*/
         });
         wv.loadUrl(url);
         windowManager.addView(wv, params);
-
-        //------------------------------
-        /*WebView wv = new WebView(this);
-        wv.getSettings().setJavaScriptEnabled(true);
-        wv.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.proceed(); // Ignore SSL certificate errors
-            }
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                Log.i("gfggf", "pf");
-            }
-        });
-        wv.setWebChromeClient(new WebChromeClient(){
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                if(newProgress>60){
-                    view.evaluateJavascript("javascript: (function(){return document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw eDTCjk')[0].innerHTML})()", new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String s) {
-                            Log.i("gfggfggfggf", s);
-                        }
-                    });
-                }
-                Log.i("gfgg", ""+newProgress);
-            }
-        });
-        Log.i("gfggf", url);
-        wv.loadUrl(url);*/
     }
     public IBinder onBind(Intent arg0) {
         return null;
