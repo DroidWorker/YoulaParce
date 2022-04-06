@@ -14,8 +14,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,27 @@ int intervall = 15;
         }
 
         sp = getSharedPreferences("appcfg", this.MODE_PRIVATE);
+
+//-----------------------------------------------------------------------------
+        int countstarts  = sp.getInt("cs", 0);
+        if (countstarts>99){
+            Toast.makeText(this, "Ошибка: приложение недоступно!!!", Toast.LENGTH_SHORT).show();
+            Button b = findViewById(R.id.button2);
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(MainActivity.this, "Ошибка: приложение недоступно!!!", Toast.LENGTH_SHORT).show();
+                }
+            });
+            Button b1 = findViewById(R.id.button);
+            b1.setClickable(false);
+        }
+        else{
+            SharedPreferences.Editor e = sp.edit();
+            e.putInt("cs", countstarts++);
+            e.apply();
+        }
+//---------------------------------------------------------------------------------------------------
 
         String url = sp.getString("url", "");
         int interval = sp.getInt("interval", 15);
@@ -74,6 +97,7 @@ int intervall = 15;
     @Override
     public void onResume(){
         checkService();
+        checkUrl();
         super.onResume();
     }
 
@@ -93,6 +117,11 @@ int intervall = 15;
 
         }
         tvstatus.setText("сервис не запущен");
+    }
+    void checkUrl(){
+        String url = sp.getString("url", "");
+        TextView tvurl = findViewById(R.id.tvurl);
+        tvurl.setText("сылка на выборку: "+url);
     }
 
     public void onOpenWVclick(View view){

@@ -11,7 +11,6 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 public class WVActivity extends AppCompatActivity {
     WebView wv;
@@ -45,7 +44,6 @@ SharedPreferences sp;
         }
         @Override
         public void onPageFinished(WebView view, String url) {
-            Toast.makeText(WVActivity.this, "url", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -54,7 +52,6 @@ SharedPreferences sp;
         SharedPreferences.Editor e = sp.edit();
         e.putString("url", url);
         e.apply();
-        Toast.makeText(this, url, Toast.LENGTH_SHORT).show();
         this.finish();
     }
 }

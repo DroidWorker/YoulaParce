@@ -1,15 +1,20 @@
 package com.kwork.youlaparce;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.net.http.SslError;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.util.Log;
@@ -29,14 +34,6 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
-import org.jsoup.Jsoup;
-import org.jsoup.select.Elements;
-import org.w3c.dom.Document;
-
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-
 public class ParceService extends Service {
     String url;
     String resUrl;
@@ -51,6 +48,13 @@ public class ParceService extends Service {
     public void onCreate(){
         Log.i("gfggfgfgf","create");
         sp = getSharedPreferences("appcfg", MODE_PRIVATE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            String processName = getProcessName(this);
+            String packageName = this.getPackageName();
+            if (!packageName.equals(processName)) {
+                WebView.setDataDirectorySuffix(processName);
+            }
+        }
         super.onCreate();
     }
     @Override
@@ -69,6 +73,16 @@ public class ParceService extends Service {
         interval = sp.getInt("interval", 900000);//default 15 min = 900000 msec
         loadData();
         return super.onStartCommand(intent, flags, startId);
+    }
+    private String getProcessName(Context context) {
+        if (context == null) return null;
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
+            if (processInfo.pid == android.os.Process.myPid()) {
+                return processInfo.processName;
+            }
+        }
+        return null;
     }
     class CDT extends CountDownTimer {
 
@@ -90,16 +104,18 @@ public class ParceService extends Service {
     }
 
     void sendNotif() {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("url", resUrl);
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
+        Uri path = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("юла")
-                        .setContentText(resUrl)
-                        .setContentIntent(pIntent);
+                        .setContentText("новый товар в вашей категории: "+resUrl)
+                        .setContentIntent(pIntent)
+                        .setAutoCancel(true)
+                        .setSound(path);
 
         Notification notification = builder.build();
 
@@ -107,14 +123,21 @@ public class ParceService extends Service {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(1, notification);
+        Log.i("gfggf", "notification");
     }
 
     void loadData(){
+        int LAYOUT_FLAG;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_PHONE;
+        }
         final WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                LAYOUT_FLAG ,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT
@@ -123,8 +146,8 @@ public class ParceService extends Service {
         params.gravity = Gravity.BOTTOM | Gravity.LEFT;
         params.x = 0;
         params.y = 0;
-        params.width = 500;
-        params.height = 250;
+        params.width = 50;
+        params.height = 1000;
 
         wv = new WebView(this);
         wv.getSettings().setJavaScriptEnabled(true);
@@ -133,6 +156,7 @@ public class ParceService extends Service {
             public void onProgressChanged(WebView view, int newProgress) {
                 Log.i("gfgg", ""+newProgress);
                 if (newProgress>=80){
+                    view.evaluateJavascript("var btn = document.getElementsByClassName('sc-XhUPp sc-beLLfS kcbcgP ePKYgn')[0].click()", null);
                     view.evaluateJavascript("javascript: (function(){return document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw eDTCjk')[0].firstChild.href})()", new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String s) {
@@ -172,6 +196,7 @@ public class ParceService extends Service {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                view.setVisibility(View.GONE);
                 Log.i("gfggf", "pf"+interval);
             }
         });
