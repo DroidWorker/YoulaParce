@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,15 +63,48 @@ int intervall = 15;
 
         String url = sp.getString("url", "");
         int interval = sp.getInt("interval", 15);
-
-        TextView tvurl = findViewById(R.id.tvurl);
+        int intervalPos = 0;
+        switch (interval){
+            case 0:
+                intervalPos = 0;
+                break;
+            case 1:
+                intervalPos = 1;
+                break;
+            case 3:
+                intervalPos = 2;
+                break;
+            case 5:
+                intervalPos = 3;
+                break;
+            case 10:
+                intervalPos = 4;
+                break;
+            case 15:
+                intervalPos = 5;
+                break;
+            case 30:
+                intervalPos = 6;
+                break;
+            case 45:
+                intervalPos = 7;
+                break;
+            case 60:
+                intervalPos = 8;
+                break;
+        }
+;
         TextView tvinterval = findViewById(R.id.tvinterval);
 
-        tvurl.setText(tvurl.getText().toString()+url);
         tvinterval.setText(tvinterval.getText().toString()+interval/60000);
 
         Spinner spinner = findViewById(R.id.spinner4);
         ArrayList<String> times = new ArrayList<>();
+        times.add("30 секунд");
+        times.add("1 минута");
+        times.add("3 минуты");
+        times.add("5 минут");
+        times.add("10 минут");
         times.add("15 минут");
         times.add("30 минут");
         times.add("45 минут");
@@ -78,10 +112,39 @@ int intervall = 15;
         ArrayAdapter<?> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, times);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        spinner.setSelection(intervalPos);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                intervall = 60000*15*(i+1);
+                 switch (i){
+                     case 0:
+                         intervall = 30000;
+                         break;
+                     case 1:
+                         intervall = 60000;
+                         break;
+                     case 2:
+                         intervall = 180000;
+                         break;
+                     case 3:
+                         intervall = 300000;
+                         break;
+                     case 4:
+                         intervall = 600000;
+                         break;
+                     case 5:
+                         intervall = 900000;
+                         break;
+                     case 6:
+                         intervall = 1800000;
+                         break;
+                     case 7:
+                         intervall = 2700000;
+                         break;
+                     case 8:
+                         intervall = 3600000;
+                         break;
+                 }
                 SharedPreferences.Editor e = sp.edit();
                 e.putInt("interval", intervall);
                 e.apply();
@@ -119,9 +182,44 @@ int intervall = 15;
         tvstatus.setText("сервис не запущен");
     }
     void checkUrl(){
-        String url = sp.getString("url", "");
-        TextView tvurl = findViewById(R.id.tvurl);
-        tvurl.setText("сылка на выборку: "+url);
+        ArrayList<String> urls = new ArrayList<>();
+        if (!sp.getString("url1", "").equals(""))
+            urls.add(sp.getString("url1", ""));
+        if (!sp.getString("url2", "").equals(""))
+            urls.add(sp.getString("url2", ""));
+        if (!sp.getString("url3", "").equals(""))
+            urls.add(sp.getString("url3", ""));
+        if (!sp.getString("url4", "").equals(""))
+            urls.add(sp.getString("url4", ""));
+        if (!sp.getString("url5", "").equals(""))
+            urls.add(sp.getString("url5", ""));
+        ArrayList<String> names = new ArrayList<>();
+        if (!sp.getString("name1", "").equals(""))
+            names.add(sp.getString("name1", ""));
+        if (!sp.getString("name2", "").equals(""))
+            names.add(sp.getString("name2", ""));
+        if (!sp.getString("name3", "").equals(""))
+            names.add(sp.getString("name3", ""));
+        if (!sp.getString("name4", "").equals(""))
+            names.add(sp.getString("name4", ""));
+        if (!sp.getString("name5", "").equals(""))
+            names.add(sp.getString("name5", ""));
+        TextView[] tvs = new TextView[5];
+        tvs[0] = findViewById(R.id.name1);
+        tvs[0].setText("слот не активен");
+        tvs[1] = findViewById(R.id.name2);
+        tvs[1].setText("слот не активен");
+        tvs[2] = findViewById(R.id.name3);
+        tvs[2].setText("слот не активен");
+        tvs[3] = findViewById(R.id.name4);
+        tvs[3].setText("слот не активен");
+        tvs[4] = findViewById(R.id.name5);
+        tvs[4].setText("слот не активен");
+        Log.i("gfggf", names.size()+"|||"+urls.size());
+        for (int i=0; i<names.size(); i++){
+            tvs[i].setText(names.get(i));
+            tvs[i].setHint(urls.get(i));
+        }
     }
 
     public void onOpenWVclick(View view){
@@ -129,15 +227,92 @@ int intervall = 15;
     }
 
     public void onStartServiceClick(View view){
-        String url = sp.getString("url", "");
-        Log.i("aaaaaaaaa", url);
+        SharedPreferences.Editor e = sp.edit();
+        EditText etname = findViewById(R.id.etname);
+        if (sp.getString("name1", "").equals("")&&!sp.getString("url1", "").equals("")){
+            e.putString("name1", etname.getText().toString());
+        }
+        else if (sp.getString("name2", "").equals("")&&!sp.getString("url2", "").equals("")){
+            e.putString("name2", etname.getText().toString());
+        }
+        else if (sp.getString("name3", "").equals("")&&!sp.getString("url3", "").equals("")){
+            e.putString("name3", etname.getText().toString());
+        }
+        else if (sp.getString("name4", "").equals("")&&!sp.getString("url4", "").equals("")){
+            e.putString("name4", etname.getText().toString());
+        }
+        else if (sp.getString("name5", "").equals("")&&!sp.getString("url5", "").equals("")){
+            e.putString("name5", etname.getText().toString());
+        }
+        e.commit();
         Intent intent = new Intent(MainActivity.this, ParceService.class);
-        intent.putExtra("url", url);
         startService(intent);
         checkService();
+        checkUrl();
     }
     public void onStopServiceClick(View view){
         stopService(new Intent(MainActivity.this, ParceService.class));
         checkService();
+    }
+    public void onOpenSetClick(View view){
+        TextView tv = (TextView)view;
+        String url = tv.getHint().toString();
+        if (!url.equals("")) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        }
+    }
+    public void onCancelClick(View view){
+        String id = getResources().getResourceEntryName(view.getId());
+        TextView[] tvs = new TextView[5];
+        tvs[0] = findViewById(R.id.name1);
+        tvs[1] = findViewById(R.id.name2);
+        tvs[2] = findViewById(R.id.name3);
+        tvs[3] = findViewById(R.id.name4);
+        tvs[4] = findViewById(R.id.name5);
+        String name = id;
+        switch (id){
+            case "cancel1":
+                name = tvs[0].getText().toString();
+                break;
+            case "cancel2":
+                name = tvs[1].getText().toString();
+                break;
+            case "cancel3":
+                name = tvs[2].getText().toString();
+                break;
+            case "cancel4":
+                name = tvs[3].getText().toString();
+                break;
+            case "cancel5":
+                name = tvs[4].getText().toString();
+                break;
+        }
+        deleteItem(name);
+        checkUrl();
+    }
+    void deleteItem(String name){
+        SharedPreferences.Editor e = sp.edit();
+        if (sp.getString("name1", "").equals(name)){
+            e.putString("name1", "");
+            e.putString("url1", "");
+        }
+        else if (sp.getString("name2", "").equals(name)){
+            e.putString("name2", "");
+            e.putString("url2", "");
+        }
+        else if (sp.getString("name3", "").equals(name)){
+            e.putString("name3", "");
+            e.putString("url3", "");
+        }
+        else if (sp.getString("name4", "").equals(name)){
+            e.putString("name4", "");
+            e.putString("url4", "");
+        }
+        else if (sp.getString("name5", "").equals(name)){
+            e.putString("name5", "");
+            e.putString("url5", "");
+        }
+        e.apply();
     }
 }

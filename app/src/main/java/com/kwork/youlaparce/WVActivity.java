@@ -50,7 +50,16 @@ SharedPreferences sp;
     public void onApplyClick(View view){
         String url = wv.getUrl();
         SharedPreferences.Editor e = sp.edit();
-        e.putString("url", url);
+        if (sp.getString("name1", "").equals(""))
+            e.putString("url1", url);
+        else if (sp.getString("name2", "").equals(""))
+            e.putString("url2", url);
+        else if (sp.getString("name3", "").equals(""))
+            e.putString("url3", url);
+        else if (sp.getString("name4", "").equals(""))
+            e.putString("url4", url);
+        else if (sp.getString("name5", "").equals(""))
+            e.putString("url5", url);
         e.apply();
         this.finish();
     }

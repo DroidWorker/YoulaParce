@@ -35,7 +35,7 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 
 public class ParceService extends Service {
-    String url;
+    String url1, url2, url3, url4, url5;
     String resUrl;
     SharedPreferences sp;
     WebView wv;
@@ -65,11 +65,6 @@ public class ParceService extends Service {
     }
     
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent!=null)
-            url = intent.getStringExtra("url");
-        else{
-            url = sp.getString("url", "");
-        }
         interval = sp.getInt("interval", 900000);//default 15 min = 900000 msec
         loadData();
         return super.onStartCommand(intent, flags, startId);
@@ -103,7 +98,25 @@ public class ParceService extends Service {
         }
     }
 
-    void sendNotif() {
+    void sendNotif(int step) {
+        String url="https://google.com";
+        switch (step){
+            case 0:
+                url = sp.getString("url1", "");
+                break;
+            case 1:
+                url = sp.getString("url2", "");
+                break;
+            case 2:
+                url = sp.getString("url3", "");
+                break;
+            case 3:
+                url = sp.getString("url4", "");
+                break;
+            case 4:
+                url = sp.getString("url5", "");
+                break;
+        }
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
@@ -126,7 +139,13 @@ public class ParceService extends Service {
         Log.i("gfggf", "notification");
     }
 
+    int step = 0;
     void loadData(){
+        url1 = sp.getString("url1", "");
+        url2 = sp.getString("url1", "");
+        url3 = sp.getString("url1", "");
+        url4 = sp.getString("url1", "");
+        url5 = sp.getString("url1", "");
         int LAYOUT_FLAG;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -160,9 +179,9 @@ public class ParceService extends Service {
                     view.evaluateJavascript("javascript: (function(){return document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw eDTCjk')[0].firstChild.href})()", new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String s) {
-                            Log.i("gfggfgg", url);
                             Log.i("gfggfggfggf", s);
                             if (!s.equals("null")) {
+                                step++;
                                 wv.setVisibility(View.GONE);
                                 if (!sp.getString("resurl", "asd").equals(s)) {
                                     Log.i("gfggf","update");
@@ -170,10 +189,30 @@ public class ParceService extends Service {
                                     e.putString("resurl", s);
                                     e.apply();
                                     resUrl = s;
-                                    sendNotif();
+                                    sendNotif(step);
                                 }
-                                CDT cdt = new CDT(interval, 1000);
-                                cdt.start();
+                                if (step!=5){
+                                    if (step==1) {
+                                        view.setVisibility(View.VISIBLE);
+                                        view.loadUrl(url2);
+                                    }
+                                    else if (step==2) {
+                                        view.setVisibility(View.VISIBLE);
+                                        view.loadUrl(url3);
+                                    }
+                                    else if (step==3) {
+                                        view.loadUrl(url4);
+                                        view.setVisibility(View.VISIBLE);
+                                    }
+                                    else if (step==4) {
+                                        view.loadUrl(url5);
+                                        view.setVisibility(View.VISIBLE);
+                                    }
+                                }
+                                else {
+                                    CDT cdt = new CDT(interval, 1000);
+                                    cdt.start();
+                                }
                             }
                         }
                     });
@@ -200,7 +239,7 @@ public class ParceService extends Service {
                 Log.i("gfggf", "pf"+interval);
             }
         });
-        wv.loadUrl(url);
+        wv.loadUrl(url1);
         windowManager.addView(wv, params);
     }
     public IBinder onBind(Intent arg0) {
