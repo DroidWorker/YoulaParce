@@ -9,6 +9,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -34,9 +37,13 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+
 public class ParceService extends Service {
     String url1, url2, url3, url4, url5;
-    String resUrl;
+    String resUrl, itemName;
     SharedPreferences sp;
     WebView wv;
     int interval;
@@ -98,7 +105,7 @@ public class ParceService extends Service {
         }
     }
 
-    void sendNotif(int step) {
+    void sendNotif(int step, String itemName) {
         String url="https://google.com";
         switch (step){
             case 0:
@@ -117,6 +124,26 @@ public class ParceService extends Service {
                 url = sp.getString("url5", "");
                 break;
         }
+        String msgCount = "";
+        Boolean flag = false;
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        StatusBarNotification[] notifications = mNotificationManager.getActiveNotifications();
+        for (StatusBarNotification notification : notifications) {
+            if (notification.getId() == 1) {
+                int count=sp.getInt("msgCount", 0);
+                msgCount = "(новых уведомлений "+(count+1)+")";
+                SharedPreferences.Editor e =sp.edit();
+                e.putInt("msgCount", count+1);
+                e.apply();
+                flag=true;
+            }
+        }
+        if (!flag){
+            SharedPreferences.Editor e =sp.edit();
+            e.putInt("msgCount", 0);
+            e.apply();
+        }
+
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
@@ -125,10 +152,10 @@ public class ParceService extends Service {
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("юла")
-                        .setContentText("новый товар в вашей категории: "+resUrl)
                         .setContentIntent(pIntent)
                         .setAutoCancel(true)
-                        .setSound(path);
+                        .setSound(path)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(msgCount+"\nновый товар: "+itemName));
 
         Notification notification = builder.build();
 
@@ -138,14 +165,36 @@ public class ParceService extends Service {
         notificationManager.notify(1, notification);
         Log.i("gfggf", "notification");
     }
-
+    public Bitmap getBitmapFromURL(String src) {
+        try {
+            java.net.URL url = new java.net.URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url
+                    .openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    int count = 5;
     int step = 0;
     void loadData(){
+        step=0;
+        count=5;
         url1 = sp.getString("url1", "");
-        url2 = sp.getString("url1", "");
-        url3 = sp.getString("url1", "");
-        url4 = sp.getString("url1", "");
-        url5 = sp.getString("url1", "");
+        if (url1.equals("")) count--;
+        url2 = sp.getString("url2", "");
+        if (url2.equals("")) count--;
+        url3 = sp.getString("url3", "");
+        if (url3.equals("")) count--;
+        url4 = sp.getString("url4", "");
+        if (url4.equals("")) count--;
+        url5 = sp.getString("url5", "");
+        if (url5.equals("")) count--;
         int LAYOUT_FLAG;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -163,10 +212,10 @@ public class ParceService extends Service {
         );
 
         params.gravity = Gravity.BOTTOM | Gravity.LEFT;
-        params.x = 0;
+        params.x = -40;
         params.y = 0;
         params.width = 50;
-        params.height = 1000;
+        params.height = 300;
 
         wv = new WebView(this);
         wv.getSettings().setJavaScriptEnabled(true);
@@ -176,41 +225,46 @@ public class ParceService extends Service {
                 Log.i("gfgg", ""+newProgress);
                 if (newProgress>=80){
                     view.evaluateJavascript("var btn = document.getElementsByClassName('sc-XhUPp sc-beLLfS kcbcgP ePKYgn')[0].click()", null);
-                    view.evaluateJavascript("javascript: (function(){return document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw eDTCjk')[0].firstChild.href})()", new ValueCallback<String>() {
-                        @Override
+                    //view.evaluateJavascript("javascript: (function(){var arr = ''; arr += document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw iCErtZ')[0].firstChild.href; arr+='|||'; arr += document.getElementsByClassName('sc-cOajty sc-fOuWYj jMbTCK UVxoo')[0].innerHTML; arr+='|||'; arr+= document.getElementsByTagName('image')[0].getAttributeNS('http://www.w3.org/1999/xlink', 'href'); return arr;})()", new ValueCallback<String>() {
+                    view.evaluateJavascript("javascript: (function(){var arr = ''; arr += document.getElementsByClassName('sc-kBrnbA sc-dNUOEE euyEAw eDTCjk')[0].firstChild.href;arr+=':::'; arr += document.getElementsByClassName('sc-cOajty sc-fOuWYj jMbTCK UVxoo')[0].innerHTML; return arr;})()", new ValueCallback<String>() {                        @Override
                         public void onReceiveValue(String s) {
-                            Log.i("gfggfggfggf", s);
+                            Log.i("gfggfggfggf", s+" view= "+view.getUrl());
                             if (!s.equals("null")) {
                                 step++;
+                                String[] sarr = s.split(":::");
+                                String resurl = sarr[0];
+                                String iname = sarr[1];
+                                Log.i("gfggfg", s+"=|="+resurl+"|"+iname);
                                 wv.setVisibility(View.GONE);
-                                if (!sp.getString("resurl", "asd").equals(s)) {
-                                    Log.i("gfggf","update");
+                                if (!sp.getString("resurl"+step, "asd").equals(resurl)) {
                                     SharedPreferences.Editor e = sp.edit();
-                                    e.putString("resurl", s);
+                                    e.putString("resurl"+step, resurl);
                                     e.apply();
-                                    resUrl = s;
-                                    sendNotif(step);
+                                    Log.i("gfggf","update");
+                                    itemName = iname;
+                                    sendNotif(step, iname);
                                 }
-                                if (step!=5){
-                                    if (step==1) {
+                                if (step!=count){
+                                    if (step==1&&!url2.equals("")) {
                                         view.setVisibility(View.VISIBLE);
                                         view.loadUrl(url2);
                                     }
-                                    else if (step==2) {
+                                    else if (step==2&&!url3.equals("")) {
                                         view.setVisibility(View.VISIBLE);
                                         view.loadUrl(url3);
                                     }
-                                    else if (step==3) {
+                                    else if (step==3&&!url4.equals("")) {
                                         view.loadUrl(url4);
                                         view.setVisibility(View.VISIBLE);
                                     }
-                                    else if (step==4) {
+                                    else if (step==4&&!url5.equals("")) {
                                         view.loadUrl(url5);
                                         view.setVisibility(View.VISIBLE);
                                     }
                                 }
                                 else {
                                     CDT cdt = new CDT(interval, 1000);
+                                    Log.i("gfggf", ""+interval);
                                     cdt.start();
                                 }
                             }
@@ -235,7 +289,7 @@ public class ParceService extends Service {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                view.setVisibility(View.GONE);
+                //view.setVisibility(View.GONE);
                 Log.i("gfggf", "pf"+interval);
             }
         });

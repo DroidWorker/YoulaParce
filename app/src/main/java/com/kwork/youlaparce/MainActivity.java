@@ -94,9 +94,6 @@ int intervall = 15;
                 break;
         }
 ;
-        TextView tvinterval = findViewById(R.id.tvinterval);
-
-        tvinterval.setText(tvinterval.getText().toString()+interval/60000);
 
         Spinner spinner = findViewById(R.id.spinner4);
         ArrayList<String> times = new ArrayList<>();
